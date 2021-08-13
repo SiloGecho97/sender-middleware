@@ -8,9 +8,10 @@ const URL = process.env.URL || 'http://localhost:7676/api/send'
 const SHORTCODE = '6841'
 const { default: axios } = require('axios');
 const connectMongoose = require('./db_connection');
+const IPTables = require('./src/models/IPTables');
 
 const app = express();
-const port = 8686;
+const port = 8787;
 
 connectMongoose()
 
@@ -55,8 +56,8 @@ app.use(morgan('tiny'))
 
 app.post('/sdp', cors(corsOptionsDelegate), (req, res) => {
 
-    console.log("proccess called 1");
-    processFeres(req.body).then(rslt => {
+    const originIpAddress = req.socket.remoteAddress;
+    processFeres(originIpAddress, req.body).then(rslt => {
         let result = { success: true }
         return res.status(200).send(result);
 
@@ -150,9 +151,19 @@ function insert(message, phoneNumber) {
     })
 }
 
-async function processFeres(reqBody) {
+function getIpShortCode(ip, shortCode) {
+    return IPTables.find({ ip, shortCode }).exec()
+}
+
+
+
+async function processFeres(ip, reqBody) {
     let message = "";
-    console.log("proccess called 2", reqBody);
+    console.log(ip, reqBody.shortCode)
+    const ipCheck = await getIpShortCode(ip, reqBody.shortCode)
+    if (ipCheck.length === 0) {
+        throw { success: false, message: "Invalid remote address." }
+    }
     let errors = validateApiCall(reqBody);
 
     if (errors.length > 0) {
@@ -181,4 +192,4 @@ async function processFeres(reqBody) {
 
 }
 
-app.listen(port, () => console.log(`Feres Service listening on port ${port}!`));
+app.listen(port, () => console.log(`Service listening on port ${port}!`));
