@@ -54,7 +54,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(morgan('tiny'))
 
-app.post('/sdp', cors(corsOptionsDelegate), (req, res) => {
+app.post('/sdp', cors(), (req, res) => {
 
     const originIpAddress = req.socket.remoteAddress;
     processFeres(originIpAddress, req.body).then(rslt => {
